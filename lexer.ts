@@ -53,16 +53,18 @@ export class Lexer {
             }
             return num
         }
-        if (register[0] == 'x') {
-            return convertToNumber(register.slice(1))
-        } else if (register[0] == 't') {
-            return convertToNumber(register.slice(1)) + 6
-        } else if (register[0] == 's') {
-            return convertToNumber(register.slice(1)) + 13
-        } else if (register[0] == 'a') {
-            return convertToNumber(register.slice(1)) + 25
-        } else {
-            throw new InvalidRegisterCallError(this.ln, this.idx + 1, `invalid register call '${register}'`)
+
+        switch (register[0]) {
+            case 'x':
+                return convertToNumber(register.slice(1))
+            case 't':
+                return convertToNumber(register.slice(1)) + 6
+            case 's':
+                return convertToNumber(register.slice(1)) + 13
+            case 'a':
+                return convertToNumber(register.slice(1)) + 25
+            default:
+                throw new InvalidRegisterCallError(this.ln, this.idx + 1, `invalid register call '${register}'`)
         }
     }
 
@@ -151,21 +153,34 @@ export class Lexer {
         if (this.cchar == ':') {
             this.advance()
             return new Token(tokenTypes.LABEL, this.ln, start, ident_str)
-        } else if (instructions.indexOf(ident_str.toLowerCase()) != -1) {
+        } else if (instructions.includes(ident_str.toLowerCase())) {
             return new Token(tokenTypes.INSTRUCTION, this.ln, start, ident_str.toLowerCase())
-        } else if (ident_str == "zero") {
-            return new Token(tokenTypes.REGCALL, this.ln, start, "0")
-        } else if (ident_str == "pc") {
-            return new Token(tokenTypes.REGCALL, this.ln, start, "32")
-        } else if (ident_str == "ret") {
-            return new Token(tokenTypes.RETURN, this.ln, start)
-        } else if (ident_str == "ecall") {
-            return new Token(tokenTypes.ECALL, this.ln, start)
-        } else if (ident_str == "NOP") {
-            return new Token(tokenTypes.NOP, this.ln, start)
+        } else {
+            switch (ident_str) {
+                case "zero":
+                    return new Token(tokenTypes.REGCALL, this.ln, start, "0")
+                case "ra":
+                    return new Token(tokenTypes.REGCALL, this.ln, start, "1")
+                case "sp":
+                    return new Token(tokenTypes.REGCALL, this.ln, start, "2")
+                case "gp":
+                    return new Token(tokenTypes.REGCALL, this.ln, start, "3")
+                case "tp":
+                    return new Token(tokenTypes.REGCALL, this.ln, start, "4")
+                case "fp":
+                    return new Token(tokenTypes.REGCALL, this.ln, start, "12")
+                case "pc":
+                    return new Token(tokenTypes.REGCALL, this.ln, start, "32")
+                case "ret":
+                    return new Token(tokenTypes.RETURN, this.ln, start)
+                case "ecall":
+                    return new Token(tokenTypes.ECALL, this.ln, start)
+                case "NOP":
+                    return new Token(tokenTypes.NOP, this.ln, start)
+                default:
+                    return new Token(tokenTypes.IDENT, this.ln, start, ident_str)
+            }
         }
-
-        return new Token(tokenTypes.IDENT, this.ln, start, ident_str)
     }
 
     private collectString(): Token {

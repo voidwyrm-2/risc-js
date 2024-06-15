@@ -36,13 +36,13 @@ There are 33 registers including pc(x0-x31 + pc)
 * 8 argument (a0-a7)
 
 Register Name | Register ID
----- | ----
+-------------- | -----
 zero register | x0/zero
 return address | x1/ra
 stack pointer | x2/sp
 global pointer | x3/gp
 thread pointer | x4/tp
-|
+-------------- | -----
 tempory register | x5/t0
 tempory register  | x6/t1
 tempory register  | x7/t2
@@ -50,7 +50,7 @@ tempory register  | x7/t2
 tempory register  | x9/t4
 tempory register  | x10/t5
 tempory register  | x11/t6
-|
+-------------- | -----
 saved register/frame pointer | x12/s0/fp
 saved register | x13/s1
 saved register | x14/s2
@@ -63,7 +63,7 @@ saved register | x20/s8
 saved register | x21/s9
 saved register | x22/s10
 saved register | x23/s11
-|
+-------------- | -----
 function argument/return value | x24/a0
 function argument/return value | x25/a1
 function argument | x26/a2
@@ -72,8 +72,8 @@ function argument | x28/a4
 function argument | x29/a5
 function argument | x30/a6
 function argument | x31/a7
-|
-program counter | x32/pc
+-------------- | -----
+program counter | pc
 
 
 ## License

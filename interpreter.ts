@@ -336,7 +336,7 @@ export class Interpreter {
 
     private getReg(reg: number | string | null, ln: number, col: number): number {
         reg = Number(reg)
-        if (reg > this.registers.length - 1 || reg < 0) {
+        if (reg > 31 || reg < 0) {
             throw new InvalidRegisterCallError(ln, col, `register ${reg} is outside of register bounds`)
         }
         return this.registers[reg]
