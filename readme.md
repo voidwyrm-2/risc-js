@@ -30,7 +30,7 @@ bqe | Branch >= | `if (rs1 >= rs2) PC += imm or label`
 
 ## Registers
 There are 33 registers including pc(x0-x31 + pc)
-* 6 special purpose
+* 6 special purpose (x0-x4 + x12)
 * 7 temporary (tO-t6)
 * 12 saved (s0-s11)
 * 8 argument (a0-a7)
