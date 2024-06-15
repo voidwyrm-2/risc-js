@@ -126,8 +126,10 @@ function main() {
 
             if (lexed.length > 1) {
                 tokenLines.push(lexed)
-            } else if (lexed[0].type != tokenTypes.TAB && lexed.length > 0) {
-                tokenLines.push(lexed)
+            } else if (lexed.length > 0) {
+                if (lexed[0].type != tokenTypes.TAB) {
+                    tokenLines.push(lexed)
+                }
             }
         }
     })
