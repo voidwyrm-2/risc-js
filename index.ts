@@ -88,10 +88,31 @@ addi s0, zero, 1
 sub pc, pc, s0
 `)
 
+scripts.set("memtest", `
+# set s0 to 20
+addi s0, zero, 20
+
+# store s0 into memory address 0
+sb s0, 0(zero)
+
+# load memory address 0 into s2
+lb s2, 0(zero)
+`)
+
+/*
+scripts.set("comment_define_test", `
+# define 'TESTVAR' as 21
+#$TESTVAR = 21
+
+# use TESTVAR for stuff
+addi s0, zero, TESTVAR
+`)
+*/
+
 
 
 function main() {
-    const scriptName = "pctest"
+    const scriptName = "memtest"
 
     const script = scripts.get(scriptName)
     const scriptLines: string[] = script == undefined ? [] : script.split('\n') // needed or typescript yells at me
@@ -103,12 +124,10 @@ function main() {
             const lexer = new Lexer(l, ln + 1)
             const lexed = lexer.Lex()
 
-            if (lexed.length > 0) {
-                if (lexed.length > 1) {
-                    tokenLines.push(lexed)
-                } else if (lexed[0].type != tokenTypes.TAB) {
-                    tokenLines.push(lexed)
-                }
+            if (lexed.length > 1) {
+                tokenLines.push(lexed)
+            } else if (lexed[0].type != tokenTypes.TAB && lexed.length > 0) {
+                tokenLines.push(lexed)
             }
         }
     })

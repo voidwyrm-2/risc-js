@@ -15,15 +15,17 @@ export class Lexer {
     private text: string
     private idx: number
     private readonly ln: number
+    private readonly allowCommentVariables: boolean
     //private decln: boolean
     private cchar: string | null
 
-    constructor(text: string, ln: number = 1) {
+    constructor(text: string, ln: number = 1) {//, allowCommentVariables: boolean = false) {
         this.text = text.replace("    ", '\t')
         this.idx = -1
         this.ln = ln
         //this.decln = false
         this.cchar = null
+        this.allowCommentVariables = false//allowCommentVariables
         this.advance()
     }
 
@@ -85,6 +87,8 @@ export class Lexer {
             } else if (this.cchar == ')') {
                 tokens.push(new Token(tokenTypes.CLOSING_PAREN, this.ln, this.idx + 1))
                 this.advance()
+            } else if (this.cchar == '=') {
+                tokens.push(new Token(tokenTypes.ASSIGN, this.ln, this.idx + 1))
             } else if (valid_ident_chars.indexOf(this.cchar) != -1) {
                 if (startsWithAny(this.cchar, "xtsa")) {
                     const regChar = this.cchar
@@ -105,12 +109,23 @@ export class Lexer {
                 tokens.push(this.collectImmediate())
             } else if (this.cchar == '.') {
                 this.advance()
-                tokens.push(this.collectIdent(true))
+                tokens.push(this.collectIdent(1))
+            } else if (this.cchar == '$') {
+                this.advance()
+                tokens.push(this.collectIdent(2))
             } else if (this.cchar == '"') {
                 tokens.push(this.collectString())
             } else if (this.cchar == '#') {
                 this.advance()
-                tokens.push(this.collectComment())
+                // TypeScript yells at me if I don't have the string conversion
+                if (String(this.cchar) == '$') {
+                    if (!this.allowCommentVariables) {
+                        throw new AsmError("IllegalCharacterError", this.ln, this.idx, `comment variables are not allowed as 'allowCommentVariables' is false`)
+                    }
+                    tokens.push(new Token(tokenTypes.COMMENT_VARIABLE_DECLARATION, this.ln, this.idx))
+                } else {
+                    tokens.push(this.collectComment())
+                }
             } else {
                 throw new AsmError("IllegalCharacterError", this.ln, this.idx, `illegal character '${this.cchar}'`)
             }
@@ -139,7 +154,16 @@ export class Lexer {
         return new Token(tokenTypes.COMMENT, this.ln - 1, start, comment_str)
     }
 
-    private collectIdent(return_as_directive: boolean = false): Token {
+    /**
+     * return_as(default 0):
+     * 
+     * 0: do nothing
+     * 
+     * 1: return as tokenTypes.DIRECTIVE
+     * 
+     * 2: return as tokenTypes.COMMENT_VARIABLE_CALL
+     */
+    private collectIdent(return_as: number = 0): Token {
         const start = this.idx + 1
 
         let ident_str = ""
@@ -148,7 +172,13 @@ export class Lexer {
             this.advance()
         }
 
-        if (return_as_directive) return new Token(tokenTypes.DIRECTIVE, this.ln, start, ident_str)
+        switch (return_as) {
+            case 1:
+                return new Token(tokenTypes.DIRECTIVE, this.ln, start, ident_str)
+            case 2:
+                return new Token(tokenTypes.COMMENT_VARIABLE_CALL, this.ln, start, ident_str)
+        }
+
 
         if (this.cchar == ':') {
             this.advance()

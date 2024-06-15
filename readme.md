@@ -26,6 +26,14 @@ beq | Branch == | `if (rs1 == rs2) PC += imm or label`
 bne | Branch != | `if (rs1 != rs2) PC += imm or label`
 blt | Branch < | `if (rs1 < rs2) PC += imm or label`
 bqe | Branch >= | `if (rs1 >= rs2) PC += imm or label`
+lb | Load Byte | `lb [rd] [memory address]([offset rs])`(loads the value at `memory address` and puts into `rd`; `offset rs` is how many bytes are being stored at once)
+sb | Store Byte | `sb [rs1] [memory address]([offset rs])`(stores the value of `rs1` into `memory address`; `offset rs` is how many bytes are being stored at once)
+
+
+## Directives currently implemented
+| Directive |
+| ----- |
+| .global |
 
 
 ## Registers
@@ -35,7 +43,7 @@ There are 33 registers including pc(x0-x31 + pc)
 * 12 saved (s0-s11)
 * 8 argument (a0-a7)
 
-Register Name | Register ID
+Register Name/Type | Register ID
 -------------- | -----
 zero register | x0/zero
 return address | x1/ra

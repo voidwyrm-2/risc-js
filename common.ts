@@ -18,7 +18,7 @@ export class Token {
 
 export function startsWithAny(str: string, chars: string): boolean {
     for (let i = 0; i < chars.length; i++) {
-        if (str[0] == chars[i]) return true
+        if (str.startsWith(chars[i])) return true
     }
     return false
 }
@@ -39,7 +39,10 @@ export const tokenTypes = {
     OPENING_PAREN: "OPENING_PAREN",
     CLOSING_PAREN: "CLOSING_PAREN",
     ECALL: "ECALL",
-    NOP: "NOP"
+    NOP: "NOP",
+    COMMENT_VARIABLE_DECLARATION: "COMMENT_VARIABLE_DECLARATION",
+    ASSIGN: "ASSIGN",
+    COMMENT_VARIABLE_CALL: "COMMENT_VARIABLE_CALL"
 } as const
 
 export const instructions = [
@@ -61,7 +64,9 @@ export const instructions = [
     "beq",
     "bne",
     "blt",
-    "bqe"
+    "bqe",
+    "lb",
+    "sb"
 ]
 
 
@@ -118,6 +123,13 @@ export class InvalidRegisterCallError extends AsmError {
 }
 
 
+export class InvalidMemoryAccessError extends AsmError {
+    constructor(ln: number, col: number, msg: string | null = null) {
+        super("InvalidMemoryAccessError", ln, col, msg)
+    }
+}
+
+
 export class UnexpectedTokenError extends AsmError {
     constructor(ln: number, col: number, msg: string | null = null) {
         super("UnexpectedTokenError", ln, col, msg)
@@ -158,4 +170,21 @@ export const branchOperationBase = [
     tokenTypes.REGCALL,
     tokenTypes.COMMA,
     [tokenTypes.IDENT, tokenTypes.IMMEDIATE]
+]
+
+export const loadstoreOperationBase = [
+    tokenTypes.INSTRUCTION,
+    tokenTypes.REGCALL,
+    tokenTypes.COMMA,
+    tokenTypes.IMMEDIATE,
+    tokenTypes.OPENING_PAREN,
+    tokenTypes.REGCALL,
+    tokenTypes.CLOSING_PAREN
+]
+
+export const commentVariableDeclaration = [
+    tokenTypes.COMMENT_VARIABLE_DECLARATION,
+    tokenTypes.IDENT,
+    tokenTypes.ASSIGN,
+    [tokenTypes.REGCALL, tokenTypes.IMMEDIATE, tokenTypes.IDENT]
 ]

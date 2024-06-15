@@ -6,9 +6,12 @@ import {
     InvalidRegisterCallError,
     UnexpectedTokenError,
     UnknownLabelError,
+    InvalidMemoryAccessError,
     nonimmediateOperationBase,
     immediateOperationBase,
-    branchOperationBase
+    branchOperationBase,
+    loadstoreOperationBase,
+    commentVariableDeclaration
 } from "./common"
 
 /** 
@@ -29,6 +32,7 @@ export class Interpreter {
     private memory: number[]
     private registers: number[]
     private labels: Map<string, number>
+    private commentVariables: Map<string, number>
 
     private readonly enforceGlobalUsingDirective: boolean
     private readonly memoryPrintMode: number
@@ -46,6 +50,7 @@ export class Interpreter {
             this.memory.push(0)
         }
         this.labels = new Map()
+        this.commentVariables = new Map()
         this.enforceGlobalUsingDirective = enforceGlobalUsingDirective
         this.memoryPrintMode = memoryPrintMode
         this.parse()
@@ -115,6 +120,25 @@ export class Interpreter {
                         this.processDirective(l)
                         this.registers[32]++
                         break
+                    case tokenTypes.COMMENT_VARIABLE_DECLARATION:
+                        this.verifyTokenTypePattern(l, commentVariableDeclaration)
+                        const getTokValue = (tok: Token) => {
+                            switch (tok.type) {
+                                case tokenTypes.REGCALL:
+                                    return this.getReg(tok.literal, tok.ln, tok.col)
+                                case tokenTypes.IMMEDIATE:
+                                    return Number(tok.literal)
+                                case tokenTypes.IDENT:
+                                    if (this.commentVariables.get(tok.literal == null ? "" : tok.literal) == undefined) {
+                                        throw new AsmError("UnknownCommentVariable", tok.ln, tok.col, `comment variable '${tok.literal}' does not exist`)
+                                    }
+                                    return Number(this.commentVariables.get(tok.literal == null ? "" : tok.literal))
+                                default:
+                                    return 0
+                            }
+                        }
+                        this.commentVariables.set(l[1].literal == null ? "" : l[1].literal, getTokValue(l[3]))
+                        break
                     default:
                         throw new UnexpectedTokenError(first.ln, first.col, `unexpected token '${first.type}'`)
                 }
@@ -149,7 +173,9 @@ export class Interpreter {
                 throw new SyntaxError(toks[t].ln, toks[t].col, `expected '${patternLiteral}', but found nothing instead`)
             }
 
-            if (typeof typePattern[t] == 'string') {
+            if (typePattern[t] == null) {
+                continue
+            } else if (typeof typePattern[t] == 'string') {
                 if (toks[t].type != typePattern[t]) {
                     throw new SyntaxError(toks[t].ln, toks[t].col, `expected '${patternLiteral}', but found '${toks[t].type.toLowerCase()}' instead`)
                 }
@@ -319,6 +345,40 @@ export class Interpreter {
                     }
                 }
                 break
+            case 'bge':
+                this.verifyTokenTypePattern(args, branchOperationBase)
+                if (this.getReg(args[1].literal, instruct.ln, args[1].col) >= this.getReg(args[3].literal, instruct.ln, args[3].col)) {
+                    if (args[5].type == tokenTypes.IMMEDIATE) {
+                        this.registers[32] += Math.floor(Number(args[5].literal) / 4)
+                    } else {
+                        this.jumpToLabel(!args[5].literal ? "" : args[5].literal, args[5].ln, args[5].col)
+                    }
+                }
+                break
+
+            // load and store
+            case 'lb':
+                /*
+                  0  1 2 34 5  6
+                  lb s0, 0(zero)
+                     |   |  ^ how many bytes are being read together(I'm not sure how to implement this)
+                     |   ^ src memory address
+                     ^ dst register
+                */
+                this.verifyTokenTypePattern(args, loadstoreOperationBase)
+                this.setReg(args[1].literal, this.readMemory(args[3].literal, args[3].ln, args[3].col), args[1].ln, args[1].col)
+                break
+            case 'sb':
+                /*
+                  0  1 2 34 5  6
+                  sb s0, 0(zero)
+                     |   |  ^ how many bytes are being stored together(I'm not sure how to implement this)
+                     |   ^ dst memory address
+                     ^ src register
+                */
+                this.verifyTokenTypePattern(args, loadstoreOperationBase)
+                this.writeMemory(args[3].literal, this.getReg(args[1].literal, args[1].ln, args[1].col), args[3].ln, args[3].col)
+                break
             default:
                 throw new AsmError("UnknownInstructionError", instruct.ln, instruct.col, `unknown instruction '${instruct.literal}'`)
         }
@@ -340,6 +400,22 @@ export class Interpreter {
             throw new InvalidRegisterCallError(ln, col, `register ${reg} is outside of register bounds`)
         }
         return this.registers[reg]
+    }
+
+    private readMemory(memCell: number | string | null, ln: number, col: number): number {
+        memCell = Number(memCell)
+        if (memCell > this.memory.length - 1 || memCell < 0) {
+            throw new InvalidMemoryAccessError(ln, col, `memory cell ${memCell} is outside of memory bounds`)
+        }
+        return this.memory[memCell]
+    }
+
+    private writeMemory(memCell: number | string | null, value: number, ln: number, col: number) {
+        memCell = Number(memCell)
+        if (memCell > this.memory.length - 1 || memCell < 0) {
+            throw new InvalidMemoryAccessError(ln, col, `memory cell ${memCell} is outside of memory bounds`)
+        }
+        return this.memory[memCell] = value
     }
 
 
