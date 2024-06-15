@@ -5,26 +5,45 @@ import { Token, AssemblyError, tokenTypes } from "./common"
 
 
 const scripts: Map<string, string> = new Map()
+
 scripts.set("test", `
+# set s0 to 10
 addi s0, zero, 10
+
+# set s1 to 21
 addi s1, zero, 21
+
+# add s0 + s1 together and put the result in s2
 add s2, s0, s1
 `)
+
 scripts.set("test_withglobal", `.global _start
+# first we use the '.global' directive to jump to '_start'
 
 _start:
+    # set s0 to 10
     addi s0, zero, 10
+
+    # set s1 to 21
     addi s1, zero, 21
+
+    # add s0 + s1 together and put the result in s2
     add s2, s0, s1
 `)
+
 scripts.set("branching", `
 beq x18, x19, loop
+
+# to prove we branched to 'loop'
+addi x22, zero, 420
 
 loop:
     addi x21, zero, 66
 `)
+
 scripts.set("branchtest", `
 # from https://github.com/hackclub/some-assembly-required/blob/main/code/riscv/riscv.s
+# (hackclub does really cool stuff, btw)
 
 # Setting up for a loop below
 addi x18, zero, 0
@@ -55,21 +74,27 @@ loop:
 # x21 = 66
 addi x21, zero, 66
 `)
+
 scripts.set("pctest", `
 # this will produce an infinite loop
 # incredible /s
-NOP
+NOP # empty lines are ignored by the lexer, so this gives us enough lines to jump back
+
+# set s0 to 1 so we can subtract 1 from the program counter
 addi s0, zero, 1
+
+# subtract 1 from the program counter, making us sit on this line forever
+# (because I increment the program counter after each line so the subtraction cancels out)
 sub pc, pc, s0
 `)
+
 
 
 function main() {
     const scriptName = "pctest"
 
     const script = scripts.get(scriptName)
-    if (script == undefined) return
-    const scriptLines: string[] = script.split('\n')
+    const scriptLines: string[] = script == undefined ? [] : script.split('\n') // needed or typescript yells at me
 
     let tokenLines: Token[][] = []
 
