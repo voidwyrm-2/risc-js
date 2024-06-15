@@ -24,6 +24,8 @@ loop:
     addi x21, zero, 66
 `)
 scripts.set("branchtest", `
+# from https://github.com/hackclub/some-assembly-required/blob/main/code/riscv/riscv.s
+
 # Setting up for a loop below
 addi x18, zero, 0
 addi x19, zero, 10
