@@ -1,0 +1,11 @@
+{
+  "name": "risc-js",
+  "version": "1.0.0",
+  "description": "A RISC-V Assembly interpreter",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc -p . --outDir build --strict --removeComments"
+  },
+  "author": "Nuclear Pasta",
+  "license": "MIT"
+}
